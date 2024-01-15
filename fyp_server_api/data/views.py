@@ -4,7 +4,7 @@ import json
 from .models import TransformerData, TransformerLocationData
 from .serializers import TransformerDataSerializer, TransformerLocationDataSerializer
 from django.utils import timezone
-from django.db.models import Avg
+from django.db.models import Avg, Max
 
 @csrf_exempt
 def index(request):
@@ -20,11 +20,11 @@ def index(request):
             print(transformer_location_data)
             # while true:
             #     pass
-            print('Before for loop',received_data['devUID'])
+            # print('Before for loop',received_data['devUID'])
             for location in transformer_location_data:   
-                print(received_data['devUID'], location['devUID'])              
+                # print(received_data['devUID'], location['devUID'])              
                 if received_data['devUID'] == location['devUID']: 
-                    print('After if in for loop',received_data['devUID'], location['devUID'])        
+                    # print('After if in for loop',received_data['devUID'], location['devUID'])        
                     transformer_data = TransformerData(
                         devUID=received_data['devUID'],
                         output_current=received_data['output_current'],
@@ -45,15 +45,53 @@ def index(request):
     return JsonResponse({'error': 'Unsupported method'}, status=405)
 
 
-def get_all_transformer_data(request):
+def get_latest_transformer_data(request):
     
     transformer_location_data = TransformerLocationData.objects.all()
     
     # get only transformer data for the registered ones
     transformer_data = TransformerData.objects.filter(devUID__in=transformer_location_data.values('devUID'))
     
-    location_data = TransformerLocationDataSerializer(transformer_location_data, many=True)
-    serializer = TransformerDataSerializer(transformer_data, many=True)
+    
+    #query for the latest data for each devUID
+    latest_data_per_dev_UID = transformer_data.values('devUID').annotate(latest_timestamp=Max('timestamp')).order_by()
+
+    #retrieve the actual data based on the latest timestamp
+    latest_data = TransformerData.objects.filter(
+        devUID__in=latest_data_per_dev_UID.values('devUID'),
+        timestamp__in=latest_data_per_dev_UID.values('latest_timestamp')
+    )
+
+    serializer = TransformerDataSerializer(latest_data, many=True) 
+    location_data  = TransformerLocationDataSerializer(transformer_location_data, many=True)   
+    # print(serializer.data)
+    
+    return JsonResponse({
+        'transformer_data': serializer.data,
+        'transformer_location_data': location_data.data
+    })    
+        
+def register(request):
+    if request.method == 'POST':
+        request_data = request.POST
+        transformer = TransformerLocationData(
+            devUID=request_data['devUID'],
+            latitude=request_data['latitude'],
+            longitude=request_data['longitude'],
+        )
+        
+        transformer.save()
+        
+        return JsonResponse({'message': 'Transformer Registered'}, status=200)
+    else:
+        return JsonResponse({'message': 'Method Not Allowed'}, status=405)
+
+
+def get_average_values(request):
+    transformer_location_data = TransformerLocationData.objects.all()
+    
+    # get only transformer data for the registered ones
+    transformer_data = TransformerData.objects.filter(devUID__in=transformer_location_data.values('devUID'))
      
     # average values of the transformer parameters
     average_values = TransformerDataSerializer().get_average_values(transformer_data)
@@ -92,25 +130,7 @@ def get_all_transformer_data(request):
         # Move to the next 15-minute window
         current_timestamp += fifteen_minutes_delta
     return JsonResponse({
-        'transformer_data':serializer.data,
-        'transformer_location_data': location_data.data,
         'average_values': average_values,
         'moving_average_values': moving_average_values,
         })
-        
-        
-        
-def register(request):
-    if request.method == 'POST':
-        request_data = request.POST
-        transformer = TransformerLocationData(
-            devUID=request_data['devUID'],
-            latitude=request_data['latitude'],
-            longitude=request_data['longitude'],
-        )
-        
-        transformer.save()
-        
-        return JsonResponse({'message': 'Transformer Registered'}, status=200)
-    else:
-        return JsonResponse({'message': 'Method Not Allowed'}, status=405)
+

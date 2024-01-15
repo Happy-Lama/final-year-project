@@ -17,10 +17,10 @@ import { onMounted } from 'vue';
 const props = defineProps(['transformers']);
 
 //data
-const transformers = ref(props.transformers ? props.transformers : []);
+const transformers = ref(props.transformers);
 const map = ref(null)
 const mapmarkers = ref([]);
-
+const transformer_locations = ref(null)
 
 
 //custom icon markers
@@ -42,14 +42,18 @@ const faultyIcon = L.icon({
 
 
 function updateMarkers(){
+    console.log('Updating map markers')
     //marker for each transformer received
+    let locations = []
     transformers.value.forEach((transformer) => {
         
         let mapmarker = L.marker(transformer.location.position, {
             icon: transformer.location.operational ? operationalIcon : faultyIcon
         });
+        
+        locations.push(transformer.location.position)
 
-        mapmarker.bindTooltip(`Current: ${transformer.data.output_current}<br/>Voltage: ${transformer.data.output_voltage}<br/>Power: ${transformer.data.output_power}<br/>Status: ${transformer.location.operational ? 'Operational': 'Faulty'}`);
+        mapmarker.bindTooltip(`Current: ${transformer.data.output_current.toFixed(2)}<br/>Voltage: ${transformer.data.output_voltage.toFixed(2)}<br/>Power: ${transformer.data.output_power.toFixed(2)}<br/>Status: ${transformer.location.operational ? 'Operational': 'Faulty'}`);
 
         mapmarker.on('mouseover', () => {
             this.openTooltip();
@@ -61,12 +65,24 @@ function updateMarkers(){
 
         mapmarkers.value.push(mapmarker)
     });
+
+    if(locations){
+        let bounds = L.latLngBounds(locations)
+        if(map.value){
+            map.value.fitBounds(bounds)
+        }
+    }
 }
 
 
 watch(() => props.transformers, (newVal, oldVal) => {
+    console.log('Transformers have changed')
     transformers.value = newVal
     updateMarkers();
+    mapmarkers.value.forEach((mapmarker)=>{
+        mapmarker.addTo(map.value);
+        console.log('Added to map')
+    });
 }) 
 
 onMounted(() => {
@@ -79,6 +95,7 @@ onMounted(() => {
 
     mapmarkers.value.forEach((mapmarker)=>{
         mapmarker.addTo(map.value);
+        console.log('Added to map')
     });
 });
 

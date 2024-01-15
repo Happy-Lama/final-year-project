@@ -101,7 +101,8 @@ import ChartComponent from '@/components/ChartComponent.vue';
 import CircularChartComponent from '@/components/CircularChartComponent.vue';
 import { useAppStore } from '@/store/app';
 import { onMounted } from 'vue';
-import { get_transformer_data } from '@/httpservice';
+import { get_average_values, get_latest_transformer_data } from '@/httpservice';
+import { onUnmounted } from 'vue';
 
 const appStore = useAppStore();
 const average_power = ref(0.0);
@@ -150,7 +151,7 @@ const frequencyChartData = ref({
     }
 })
 
-watch(() => appStore.average_values, (newVal, oldVal) => {
+function updateValues(newVal){
     average_current.value = newVal['average_output_current']
     average_voltage.value = newVal['average_output_voltage']
     average_power.value = newVal['average_output_power']/1000
@@ -181,64 +182,88 @@ watch(() => appStore.average_values, (newVal, oldVal) => {
     let voltagedata = []
     let reactivepowerdata = []
     let frequencydata = []
+    if(appStore.moving_average_values){
+        appStore.moving_average_values.forEach((data) => {
+            timestamps.push(data['timestamp'])
+            powerdata.push(data['average_values']['output_power__avg']/1000)
+            currentdata.push(data['average_values']['output_current__avg'])
+            voltagedata.push(data['average_values']['output_voltage__avg'])
+            reactivepowerdata.push(data['average_values']['output_reactive_power__avg']/1000)
+            frequencydata.push(data['average_values']['output_frequency__avg'])
+        })
+    
+        powerChartData.value = {
+            label: 'Power',
+            data: {
+                x: timestamps,
+                y: powerdata
+            }
+        }
+        
 
-    appStore.moving_average_values.forEach((data) => {
-        timestamps.push(data['timestamp'])
-        powerdata.push(data['average_values']['output_power__avg']/1000)
-        currentdata.push(data['average_values']['output_current__avg'])
-        voltagedata.push(data['average_values']['output_voltage__avg'])
-        reactivepowerdata.push(data['average_values']['output_reactive_power__avg']/1000)
-        frequencydata.push(data['average_values']['output_frequency__avg'])
-    })
+        currentChartData.value = {
+            label: 'Current',
+            data: {
+                x: timestamps,
+                y: currentdata
+            }
+        }
+        
 
-    powerChartData.value = {
-        label: 'Power',
-        data: {
-            x: timestamps,
-            y: powerdata
+        voltageChartData.value ={
+            label: 'Voltage',
+            data: {
+                x: timestamps,
+                y: voltagedata
+            }
+        }
+        
+        
+        reactivePowerChartData.value = {
+            label: 'Reactive Power',
+            data: {
+                x: timestamps,
+                y: reactivepowerdata
+            }
+        }
+        
+
+        frequencyChartData.value = {
+            label: 'Frequency',
+            data: {
+                x: timestamps,
+                y: frequencydata
+            }
         }
     }
-    
+}
 
-    currentChartData.value = {
-        label: 'Current',
-        data: {
-            x: timestamps,
-            y: currentdata
-        }
-    }
-    
+const intervalID = ref(null)
 
-    voltageChartData.value ={
-        label: 'Voltage',
-        data: {
-            x: timestamps,
-            y: voltagedata
-        }
-    }
-    
-    
-    reactivePowerChartData.value = {
-        label: 'Reactive Power',
-        data: {
-            x: timestamps,
-            y: reactivepowerdata
-        }
-    }
-    
-
-    frequencyChartData.value = {
-        label: 'Frequency',
-        data: {
-            x: timestamps,
-            y: frequencydata
-        }
-    }
-    
+watch(() => appStore.average_values, (newVal, oldVal) => {
+    updateValues(newVal)
 })
 
 onMounted(() => {
-    get_transformer_data('http://localhost:8000/data/transformers/', appStore)
+    if(appStore.average_values == null){
+        get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+        get_average_values('http://localhost:8000/data/transformers/average_values/', appStore)
+
+        intervalID.value = setInterval(()=>{
+            get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+            get_average_values('http://localhost:8000/data/transformers/average_values/', appStore)
+        }, 300000)
+    } else {
+        updateValues(appStore.average_values)
+        intervalID.value = setInterval(()=>{
+            get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+            get_average_values('http://localhost:8000/data/transformers/average_values/', appStore)
+        }, 300000)
+    }
+})
+
+onUnmounted(() => {
+    clearInterval(intervalID.value)
 })
 
 </script>

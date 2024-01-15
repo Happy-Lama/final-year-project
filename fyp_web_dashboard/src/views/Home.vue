@@ -5,17 +5,16 @@
 <script setup>
 import MapComponent from '@/components/MapComponent.vue';
 import { useAppStore } from '@/store/app';
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { ref } from 'vue';
-import { get_transformer_data } from '@/httpservice';
+import { get_latest_transformer_data } from '@/httpservice';
 import { watch } from 'vue';
 
 const appStore = useAppStore()
 
 const transformers = ref([]);
 
-
-watch(() => appStore.transformer_data, (newVal, oldVal) => {
+function updateLatestValues(newVal){
   console.log(newVal)
   let transformers_data = []
 
@@ -40,16 +39,40 @@ watch(() => appStore.transformer_data, (newVal, oldVal) => {
     }
 
     transformers_data.push(formatted_data)
+    
   })
   console.log(transformers_data)
   transformers.value = transformers_data
+  console.log("Transformers", transformers.value)
+}
+
+
+const intervalID = ref(null)
+
+watch(() => appStore.transformer_data, (newVal, oldVal) => {
+  updateLatestValues(newVal)
 })
 
 
 
 //lifecycle hooks
 onMounted(() => {
-  get_transformer_data('http://localhost:8000/data/transformers/', appStore)
+    if(appStore.transformer_data == null){
+        get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+
+        intervalID.value = setInterval(()=>{
+          get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+        }, 300000)
+    } else {
+        updateLatestValues(appStore.transformer_data)
+        intervalID.value = setInterval(()=>{
+          get_latest_transformer_data('http://localhost:8000/data/transformers/latest/', appStore)
+        }, 300000)
+    }
+})
+
+onUnmounted(() => {
+    clearInterval(intervalID.value)
 })
 
 </script>

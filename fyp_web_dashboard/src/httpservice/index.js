@@ -51,21 +51,37 @@ function register(url, formData, store){
     });    
 }
 
-function get_transformer_data(url, store){
+function get_latest_transformer_data(url, store){
     axios.get(url)
     .then((response) => {
         console.log(response.data)
         store.transformer_data = response.data['transformer_data']
         store.transformer_location_data = response.data['transformer_location_data']
-        store.average_values = response.data['average_values']
-        store.moving_average_values = response.data['moving_average_values']
+        // store.average_values = response.data['average_values']
+        // store.moving_average_values = response.data['moving_average_values']
         console.log("Stored Transformer Data", store.transformer_data)
         console.log("Stored Transformer Location Data", store.transformer_location_data)
-        console.log("Stored Average Values", store.average_values)
-        console.log("Stored Moving Average Values", store.moving_average_values)
+        // console.log("Stored Average Values", store.average_values)
+        // console.log("Stored Moving Average Values", store.moving_average_values)
     })
     .catch((error) => {
         console.error(error);
     })    
 }
-export { login, get_csrf_token, register, get_transformer_data }
+
+function get_average_values(url, store){
+    axios.get(url)
+    .then((response) => {
+        console.log(response.data)
+        store.average_values = response.data['average_values']
+        store.moving_average_values = response.data['moving_average_values']
+        // console.log("Stored Transformer Data", store.transformer_data)
+        // console.log("Stored Transformer Location Data", store.transformer_location_data)
+        console.log("Stored Average Values", store.average_values)
+        console.log("Stored Moving Average Values", store.moving_average_values)
+    })
+    .catch((error) => {
+        console.error(error);
+    }) 
+}
+export { login, get_csrf_token, register, get_latest_transformer_data, get_average_values }

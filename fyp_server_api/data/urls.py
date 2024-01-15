@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('api/', views.index),
-    path('transformers/', views.get_all_transformer_data),
-    path('transformers/register/', views.register)
+    path('transformers/latest/', views.get_latest_transformer_data),
+    path('transformers/register/', views.register),
+    path('transformers/average_values/', views.get_average_values)
 ]
