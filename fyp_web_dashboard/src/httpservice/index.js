@@ -16,6 +16,7 @@ function login(url, formData, store){
     }).then((response) => {
         console.log("Data", response.data)
         store.logged_in = true;
+        store.user = response.data['user']
         router.push({ name: 'Home' })
     }).catch((error) => {
         console.error(error);
@@ -45,6 +46,7 @@ function register(url, formData, store){
         withCredentials: true,
     }).then((response) => {
         console.log("Data", response.data)
+        alert("Transformer Successfully registered")
     }).catch((error) => {
         console.error(error);
         alert("Failed to register Transformer")
@@ -84,4 +86,38 @@ function get_average_values(url, store){
         console.error(error);
     }) 
 }
-export { login, get_csrf_token, register, get_latest_transformer_data, get_average_values }
+
+
+function logout(url, store){
+    let formData = new FormData()
+    formData.append('username', store.user.username)
+    axios.post(url, formData, {
+        headers: {
+            'X-CSRFtoken': store.csrfToken,
+            "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+    })
+    .then(response => {
+        // Handle the success response
+        console.log(response.data);
+        store.user = null
+    })
+    .catch(error => {
+        // Handle the error response
+        console.error(error.response.data);
+    });
+}
+
+function get_notifications(url, store){
+    axios.get(url)
+    .then((response) => {
+        console.log(response.data)
+        store.notifications = response.data['notifications']
+    })
+    .catch((error) => {
+        console.error(error);
+    }) 
+}
+
+export { login, get_csrf_token, register, get_latest_transformer_data, get_average_values, logout, get_notifications }

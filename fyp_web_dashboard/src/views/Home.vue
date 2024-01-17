@@ -16,8 +16,9 @@ const transformers = ref([]);
 
 function updateLatestValues(newVal){
   console.log(newVal)
+  if(newVal){}
   let transformers_data = []
-
+  let transformer_devUIDs = []
   newVal.forEach((transformer) => {
     let formatted_data = {
       devUID: transformer['devUID'],
@@ -39,8 +40,29 @@ function updateLatestValues(newVal){
     }
 
     transformers_data.push(formatted_data)
+    transformer_devUIDs.push(transformer['devUID'])
     
   })
+
+  for( let i = 0; i < appStore.transformer_location_data.length; i++){
+    if(!transformer_devUIDs.includes(appStore.transformer_location_data[i]['devUID'])){
+      let transformer = {
+        devUID: appStore.transformer_location_data[i]['devUID'],
+        data: {
+          output_current: 0,
+          output_voltage: 0,
+          output_power: 0,
+        },
+        location : {
+          position: [appStore.transformer_location_data[i]['latitude'], appStore.transformer_location_data[i]['longitude']],
+          operational: false
+        }
+      }
+
+      transformers_data.push(transformer)
+    }
+  }
+  
   console.log(transformers_data)
   transformers.value = transformers_data
   console.log("Transformers", transformers.value)

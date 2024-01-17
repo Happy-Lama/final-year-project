@@ -39,10 +39,10 @@
                         <v-col cols="6" align-self="start">
                             <v-card variant="flat">
                                 <v-card-title class="text-h4">
-                                    {{ average_current }}
+                                    {{ average_transformer_loading }}
                                 </v-card-title>
                                 <v-card-text>
-                                    Average Current (A)
+                                    Average Transformer Loading (%)
                                 </v-card-text>
                             </v-card>
                         </v-col>
@@ -63,6 +63,11 @@
     </v-card>
     
     <v-row>
+
+        <!-- Average Loading Chart -->
+        <v-col cols="6">
+            <ChartComponent :chart-data="loadingChartData" chart-title="Average Loading" data-type="loading_percentage"/>
+        </v-col>
 
         <!-- Average Power Chart -->
         <v-col cols="6">
@@ -107,7 +112,7 @@ import { onUnmounted } from 'vue';
 const appStore = useAppStore();
 const average_power = ref(0.0);
 const average_voltage = ref(0.0);
-const average_current = ref(0.0);
+const average_transformer_loading = ref(0.0);
 const average_frequency = ref(0.0);
 
 const circhartData = ref({
@@ -150,89 +155,112 @@ const frequencyChartData = ref({
         y: []
     }
 })
-
-function updateValues(newVal){
-    average_current.value = newVal['average_output_current']
-    average_voltage.value = newVal['average_output_voltage']
-    average_power.value = newVal['average_output_power']/1000
-    average_frequency.value = newVal['average_output_frequency']
-    console.log(average_current.value)
-    // average_current.value = 100
-
-    circhartData.value = {
-        online: 0,
-        offline: 0,
+const loadingChartData = ref({
+    label: 'Average Loading',
+    data: {
+        x: [],
+        y: []
     }
+})
 
-    appStore.transformer_location_data.forEach((location) => {
-        // console.log(location)
-        
+function updateValues(newVal, oldVal){
+    // let empty_val = new Proxy(Object())
+    // console.log("New value", newVal['average_transformer_loading'] == null)
+    // console.log("Old val", oldVal)
+    if(newVal['average_transformer_loading'] && newVal['average_output_voltage'] && newVal['average_output_power'] && newVal['average_output_frequency']){
+        average_transformer_loading.value = newVal['average_transformer_loading']
+        average_voltage.value = newVal['average_output_voltage']
+        average_power.value = newVal['average_output_power']/1000
+        average_frequency.value = newVal['average_output_frequency']
+        // console.log(average_current.value)
+        // average_current.value = 100
 
-        if(location['operational']){
-            circhartData.value = { online: ++circhartData.value.online , offline: circhartData.value.offline }
-        } else {
-            circhartData.value = { online: circhartData.value.online , offline: ++circhartData.value.offline }
+        circhartData.value = {
+            online: 0,
+            offline: 0,
         }
-    })
 
-    console.log(circhartData.value)
-    let timestamps = []
-    let powerdata = []
-    let currentdata = []
-    let voltagedata = []
-    let reactivepowerdata = []
-    let frequencydata = []
-    if(appStore.moving_average_values){
-        appStore.moving_average_values.forEach((data) => {
-            timestamps.push(data['timestamp'])
-            powerdata.push(data['average_values']['output_power__avg']/1000)
-            currentdata.push(data['average_values']['output_current__avg'])
-            voltagedata.push(data['average_values']['output_voltage__avg'])
-            reactivepowerdata.push(data['average_values']['output_reactive_power__avg']/1000)
-            frequencydata.push(data['average_values']['output_frequency__avg'])
+        appStore.transformer_location_data.forEach((location) => {
+            // console.log(location)
+            
+
+            if(location['operational']){
+                circhartData.value = { online: ++circhartData.value.online , offline: circhartData.value.offline }
+            } else {
+                circhartData.value = { online: circhartData.value.online , offline: ++circhartData.value.offline }
+            }
         })
-    
-        powerChartData.value = {
-            label: 'Power',
-            data: {
-                x: timestamps,
-                y: powerdata
-            }
-        }
-        
 
-        currentChartData.value = {
-            label: 'Current',
-            data: {
-                x: timestamps,
-                y: currentdata
-            }
-        }
-        
+        console.log(circhartData.value)
+        let timestamps = []
+        let powerdata = []
+        let currentdata = []
+        let voltagedata = []
+        let reactivepowerdata = []
+        let frequencydata = []
+        let loadingdata = []
 
-        voltageChartData.value ={
-            label: 'Voltage',
-            data: {
-                x: timestamps,
-                y: voltagedata
+        if(appStore.moving_average_values){
+            appStore.moving_average_values.forEach((data) => {
+                timestamps.push(data['timestamp'])
+                powerdata.push(data['average_values']['output_power__avg']/1000)
+                currentdata.push(data['average_values']['output_current__avg'])
+                voltagedata.push(data['average_values']['output_voltage__avg'])
+                reactivepowerdata.push(data['average_values']['output_reactive_power__avg']/1000)
+                frequencydata.push(data['average_values']['output_frequency__avg'])
+                loadingdata.push(data['average_values']['current_loading_percentage__avg'])
+            })
+        
+            powerChartData.value = {
+                label: 'Power',
+                data: {
+                    x: timestamps,
+                    y: powerdata
+                }
             }
-        }
-        
-        
-        reactivePowerChartData.value = {
-            label: 'Reactive Power',
-            data: {
-                x: timestamps,
-                y: reactivepowerdata
-            }
-        }
-        
+            
 
-        frequencyChartData.value = {
-            label: 'Frequency',
-            data: {
-                x: timestamps,
-                y: frequencydata
+            currentChartData.value = {
+                label: 'Current',
+                data: {
+                    x: timestamps,
+                    y: currentdata
+                }
+            }
+            
+
+            voltageChartData.value ={
+                label: 'Voltage',
+                data: {
+                    x: timestamps,
+                    y: voltagedata
+                }
+            }
+            
+            
+            reactivePowerChartData.value = {
+                label: 'Reactive Power',
+                data: {
+                    x: timestamps,
+                    y: reactivepowerdata
+                }
+            }
+            
+
+            frequencyChartData.value = {
+                label: 'Frequency',
+                data: {
+                    x: timestamps,
+                    y: frequencydata
+                }
+            }
+
+            loadingChartData.value = {
+                label: 'Average Loading',
+                data: {
+                    x: timestamps,
+                    y: loadingdata
+                }
             }
         }
     }
@@ -241,7 +269,7 @@ function updateValues(newVal){
 const intervalID = ref(null)
 
 watch(() => appStore.average_values, (newVal, oldVal) => {
-    updateValues(newVal)
+    updateValues(newVal, oldVal)
 })
 
 onMounted(() => {

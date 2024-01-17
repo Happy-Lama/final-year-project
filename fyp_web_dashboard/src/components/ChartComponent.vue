@@ -97,6 +97,9 @@ const chartOptions = ref({
                         if(props.dataType === "frequency"){
                             return value + "Hz";
                         }
+                        if(props.dataType === "loading_percentage"){
+                            return value + "%";
+                        }
                         return value;
                     } 
             }

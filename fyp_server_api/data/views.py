@@ -5,6 +5,8 @@ from .models import TransformerData, TransformerLocationData
 from .serializers import TransformerDataSerializer, TransformerLocationDataSerializer
 from django.utils import timezone
 from django.db.models import Avg, Max
+from dashboard.models import Notifications
+from . import threshold_checks
 
 @csrf_exempt
 def index(request):
@@ -18,13 +20,11 @@ def index(request):
             # check if transformer is registered
             transformer_location_data = TransformerLocationData.objects.values(('devUID'))
             print(transformer_location_data)
-            # while true:
-            #     pass
-            # print('Before for loop',received_data['devUID'])
+            
             for location in transformer_location_data:   
-                # print(received_data['devUID'], location['devUID'])              
+                            
                 if received_data['devUID'] == location['devUID']: 
-                    # print('After if in for loop',received_data['devUID'], location['devUID'])        
+                    nominal_power_rating = TransformerLocationData.objects.get(devUID=location['devUID']).nominal_power_rating  
                     transformer_data = TransformerData(
                         devUID=received_data['devUID'],
                         output_current=received_data['output_current'],
@@ -33,9 +33,12 @@ def index(request):
                         output_reactive_power=received_data['output_reactive_power'],
                         output_frequency=received_data['output_frequency'],
                         timestamp=timezone.now(),
+                        nominal_power_rating=nominal_power_rating,
                     )
                     
                     transformer_data.save()
+                    
+                    threshold_checks.check_thresholds(transformer_data)
 
                     return JsonResponse({'message': 'Data received successfully'})
             return JsonResponse({'message': 'Unregistered Transformer'}, status=400)
@@ -78,10 +81,19 @@ def register(request):
             devUID=request_data['devUID'],
             latitude=request_data['latitude'],
             longitude=request_data['longitude'],
+            nominal_power_rating=request_data['nominal_power_rating']
         )
         
         transformer.save()
-        
+
+        notification = Notifications(
+            title="Transformer Added",
+            priority="info",
+            text=f"Transformer at (Latitude: {transformer.latitude}, Longitude: {transformer.longitude}) has been successfully registered\nTransformer devUID: {transformer.devUID}",
+            timestamp=timezone.now()
+        )
+        notification.save()
+
         return JsonResponse({'message': 'Transformer Registered'}, status=200)
     else:
         return JsonResponse({'message': 'Method Not Allowed'}, status=405)
@@ -98,7 +110,7 @@ def get_average_values(request):
     
     # moving average values for the transformer parameters
     # Calculate moving average over the last 24 hours with a window of 15 minutes
-    twenty_four_hours_ago = timezone.now() - timezone.timedelta(hours=24)
+    twenty_four_hours_ago = timezone.now() - timezone.timedelta(hours=24*7)
     moving_average_queryset = TransformerData.objects.filter(timestamp__gte=twenty_four_hours_ago, devUID__in=transformer_location_data.values('devUID'))
 
             
@@ -120,7 +132,8 @@ def get_average_values(request):
                 Avg('output_voltage'),
                 Avg('output_power'),
                 Avg('output_reactive_power'),
-                Avg('output_frequency')
+                Avg('output_frequency'),
+                Avg('current_loading_percentage')
             )
             moving_average_values.append({
                 'timestamp': current_timestamp,

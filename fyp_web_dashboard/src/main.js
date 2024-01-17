@@ -5,8 +5,6 @@
  */
 
 
-import { get_csrf_token } from '@/httpservice';
-
 // Plugins
 import { registerPlugins } from '@/plugins'
 

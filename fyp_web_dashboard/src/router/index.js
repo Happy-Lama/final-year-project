@@ -28,6 +28,11 @@ const routes = [
         name: 'Register',
         component: () => import('@/views/Register.vue'),
       },
+      {
+        path: 'notifications',
+        name: 'Notifications',
+        component: () => import('@/views/Notifications.vue'),
+      },
     ],
     meta: { authRequired: true }
   },
