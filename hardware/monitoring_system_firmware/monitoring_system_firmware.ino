@@ -1,9 +1,12 @@
 #include <ModbusMaster.h>
+#include <math.h>
 
 #define RS485_DE 4
 #define RS485_RE_NEG 5
 
 ModbusMaster node;
+
+unsigned char upper, lower;
 
 void preTransmission(){
   digitalWrite(RS485_DE, HIGH);
@@ -31,6 +34,7 @@ void setup() {
   //crucial as it will affect the communication
   node.preTransmission(preTransmission);
   node.postTransmission(postTransmission);
+//  readValues();
 }
 
 
@@ -38,10 +42,15 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  int success = readValues();
+  int read_dpt_info = readDecimalPointInfo();
+  
   delay(1000);
-  if(success){
-    displayReceivedData();
-    delay(15000);
+  if(read_dpt_info){
+    int read_values = readValues();
+    if(read_values){
+      displayReceivedData();
+      delay(15000);
+    }
+    
   }  
 }
