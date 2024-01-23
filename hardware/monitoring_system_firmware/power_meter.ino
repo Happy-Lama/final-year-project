@@ -58,58 +58,84 @@ int readValues(){
 
 
 void displayReceivedData(){
+  Serial.println(F(""));
+  Serial.println(F(""));
+  Serial.println(F("-------------------------"));
+  Serial.println(F("|\tReceived Data\t|"));
+  Serial.println(F("-------------------------"));
   //phase voltages
-  Serial.print(F("Ua: "));
-  Serial.println(transformer_electrical_data.phase_voltages[0]);
-  Serial.print(F("Ub: "));
-  Serial.println(transformer_electrical_data.phase_voltages[1]);
-  Serial.print(F("Uc: "));
-  Serial.println(transformer_electrical_data.phase_voltages[2]);
+  Serial.print(F("|\tUa: "));
+  Serial.print(transformer_electrical_data.phase_voltages[0]);
+  Serial.println(F(" V\t|"));
+  Serial.print(F("|\tUb: "));
+  Serial.print(transformer_electrical_data.phase_voltages[1]);
+  Serial.println(F(" V\t|"));
+  Serial.print(F("|\tUc: "));
+  Serial.print(transformer_electrical_data.phase_voltages[2]);
+  Serial.println(F(" V\t|"));
 
   //line to line
-  Serial.print(F("Uab: "));
-  Serial.println(transformer_electrical_data.line_to_line[0]);
-  Serial.print(F("Ubc: "));
-  Serial.println(transformer_electrical_data.line_to_line[1]);
-  Serial.print(F("Uca: "));
-  Serial.println(transformer_electrical_data.line_to_line[2]);
+  Serial.print(F("|\tUab: "));
+  Serial.print(transformer_electrical_data.line_to_line[0]);
+  Serial.println(F(" V\t|"));
+  Serial.print(F("|\tUbc: "));
+  Serial.print(transformer_electrical_data.line_to_line[1]);
+  Serial.println(F(" V\t|"));
+  Serial.print(F("|\tUca: "));
+  Serial.print(transformer_electrical_data.line_to_line[2]);
+  Serial.println(F(" V\t|"));
+  
 
   //phase currents
-  Serial.print(F("Ia: "));
-  Serial.println(transformer_electrical_data.phase_currents[0]);
-  Serial.print(F("Ib: "));
-  Serial.println(transformer_electrical_data.phase_currents[1]);
-  Serial.print(F("Ic: "));
-  Serial.println(transformer_electrical_data.phase_currents[2]);
+  Serial.print(F("|\tIa: "));
+  Serial.print(transformer_electrical_data.phase_currents[0]);
+  Serial.println(F(" A\t|"));
+  Serial.print(F("|\tIb: "));
+  Serial.print(transformer_electrical_data.phase_currents[1]);
+  Serial.println(F(" A\t|"));
+  Serial.print(F("|\tIc: "));
+  Serial.print(transformer_electrical_data.phase_currents[2]);
+  Serial.println(F(" A\t|"));
+
+  
 
   //active power per phase
-  Serial.print(F("Pa: "));
-  Serial.println(transformer_electrical_data.active_power_per_phase[0]);
-  Serial.print(F("Pb: "));
-  Serial.println(transformer_electrical_data.active_power_per_phase[1]);
-  Serial.print(F("Pc: "));
-  Serial.println(transformer_electrical_data.active_power_per_phase[2]);
-
+  Serial.print(F("|\tPa: "));
+  Serial.print(transformer_electrical_data.active_power_per_phase[0]);
+  Serial.println(F(" kva\t|"));
+  Serial.print(F("|\tPb: "));
+  Serial.print(transformer_electrical_data.active_power_per_phase[1]);
+  Serial.println(F(" kva\t|"));
+  Serial.print(F("|\tPc: "));
+  Serial.print(transformer_electrical_data.active_power_per_phase[2]);
+  Serial.println(F(" kva\t|"));
+  
   //reactive power per phase
-  Serial.print(F("Qa: "));
-  Serial.println(transformer_electrical_data.reactive_power_per_phase[0]);
-  Serial.print(F("Qb: "));
-  Serial.println(transformer_electrical_data.reactive_power_per_phase[1]);
-  Serial.print(F("Qc: "));
-  Serial.println(transformer_electrical_data.reactive_power_per_phase[2]);
-
+  Serial.print(F("|\tQa: "));
+  Serial.print(transformer_electrical_data.reactive_power_per_phase[0]);
+  Serial.println(F(" kvar\t|"));
+  Serial.print(F("|\tQb: "));
+  Serial.print(transformer_electrical_data.reactive_power_per_phase[1]);
+  Serial.println(F(" kvar\t|"));
+  Serial.print(F("|\tQc: "));
+  Serial.print(transformer_electrical_data.reactive_power_per_phase[2]);
+  Serial.println(F(" kvar\t|"));
+  
   //power factor per phase
-  Serial.print(F("PFa: "));
+  Serial.print(F("|\tPFa: "));
   Serial.print(transformer_electrical_data.power_factor_per_phase[0]);
-  Serial.println(F("%"));
-  Serial.print(F("PFb: "));
+  Serial.println(F(" %\t|"));
+  Serial.print(F("|\tPFb: "));
   Serial.print(transformer_electrical_data.power_factor_per_phase[1]);
-  Serial.println(F("%"));
-  Serial.print(F("PFc: "));
+  Serial.println(F(" %\t|"));
+  Serial.print(F("|\tPFc: "));
   Serial.print(transformer_electrical_data.power_factor_per_phase[2]);
-  Serial.println(F("%"));
+  Serial.println(F(" %\t|"));
 
   //frequency
-  Serial.print(F("F: "));
-  Serial.println(transformer_electrical_data.frequency);
+  Serial.print(F("|\tF: "));
+  Serial.print(transformer_electrical_data.frequency);
+  Serial.println(F(" Hz\t|"));
+  Serial.println(F("-------------------------"));
+  Serial.println(F(""));
 }
